@@ -1,0 +1,1646 @@
+/* ===== CRYPTO DASHBOARD DESIGN SYSTEM ===== */
+
+/* Design Tokens - CSS Custom Properties */
+:root {
+  /* === SPACING SCALE === */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  
+  /* === TRADING TYPOGRAPHY SCALE === */
+  --text-2xs: 0.6875rem;  /* 11px - Chart labels, timestamps */
+  --text-xs: 0.75rem;     /* 12px - Secondary data, metadata */
+  --text-sm: 0.875rem;    /* 14px - Body text, descriptions */
+  --text-base: 1rem;      /* 16px - Primary text */
+  --text-lg: 1.125rem;    /* 18px - Section headers */
+  --text-xl: 1.25rem;     /* 20px - Card titles */
+  --text-2xl: 1.5rem;     /* 24px - Important values */
+  --text-3xl: 2rem;       /* 32px - Major numbers (P&L) */
+  --text-4xl: 2.5rem;     /* 40px - Hero numbers (portfolio total) */
+  --text-5xl: 3rem;       /* 48px - Main price displays */
+  
+  /* === FONT WEIGHTS === */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* === LINE HEIGHTS === */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  /* === BORDER RADIUS === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* === COLOR PALETTE === */
+  /* Primary Colors (Blue) */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+  
+  /* Success Colors (Green) */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+  
+  /* Error Colors (Red) */
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
+  --error-900: #7f1d1d;
+  
+  /* Warning Colors (Yellow) */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+  
+  /* Neutral Colors (Gray) */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* === SEMANTIC COLORS (Dark Theme Default) === */
+  --background: #0a0e13;
+  --surface: #1a1f28;
+  --surface-secondary: #252b36;
+  --surface-tertiary: #2d3441;
+  --border: #374151;
+  --border-strong: #4b5563;
+  --text: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  /* Crypto-specific colors */
+  --crypto-gold: #f0b90b;
+  --crypto-gold-hover: #e6a800;
+  --crypto-green: #03dac6;
+  --crypto-red: #f44336;
+  --crypto-chart-bg: #0b0e11;
+  --crypto-chart-grid: #1e2329;
+  
+  /* === INTERACTIVE STATES === */
+  --hover-opacity: 0.8;
+  --pressed-opacity: 0.7;
+  --disabled-opacity: 0.5;
+  
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* === Z-INDEX SCALE === */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-notification: 1080;
+}
+
+/* Light Theme Override (now optional) */
+[data-theme="light"] {
+  --background: var(--gray-50);
+  --surface: #ffffff;
+  --surface-secondary: var(--gray-100);
+  --surface-tertiary: var(--gray-200);
+  --border: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --text: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted: var(--gray-500);
+  
+  --crypto-chart-bg: #ffffff;
+  --crypto-chart-grid: var(--gray-200);
+}
+
+/* Enhanced Dark Theme Variations */
+.crypto-dark {
+  --background: #0a0e13;
+  --surface: #1a1f28;
+  --surface-secondary: #252b36;
+  --surface-tertiary: #2d3441;
+}
+
+.crypto-darker {
+  --background: #000000;
+  --surface: #0f1419;
+  --surface-secondary: #1a2026;
+  --surface-tertiary: #252a33;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Spacing Utilities */
+.p-0 { padding: var(--space-0); }
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-5 { padding: var(--space-5); }
+.p-6 { padding: var(--space-6); }
+.p-8 { padding: var(--space-8); }
+.p-10 { padding: var(--space-10); }
+.p-12 { padding: var(--space-12); }
+
+.m-0 { margin: var(--space-0); }
+.m-1 { margin: var(--space-1); }
+.m-2 { margin: var(--space-2); }
+.m-3 { margin: var(--space-3); }
+.m-4 { margin: var(--space-4); }
+.m-5 { margin: var(--space-5); }
+.m-6 { margin: var(--space-6); }
+.m-8 { margin: var(--space-8); }
+.m-10 { margin: var(--space-10); }
+.m-12 { margin: var(--space-12); }
+
+/* Gap Utilities */
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+
+/* Typography Utilities */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+
+/* === SEMANTIC TRADING TYPOGRAPHY === */
+
+/* Major financial values (portfolio total, major P&L) */
+.trading-value-hero {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Price displays (current crypto prices) */
+.trading-price-major {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* Secondary values (changes, percentages) */
+.trading-value-secondary {
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  line-height: 1.3;
+}
+
+/* Small financial data (holdings amounts, small changes) */
+.trading-value-small {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+}
+
+/* Labels and metadata */
+.trading-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+/* Chart and technical data */
+.trading-data-technical {
+  font-size: var(--text-xs);
+  font-weight: var(--font-normal);
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+/* Timestamps and metadata */
+.trading-timestamp {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-normal);
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-semibold { font-weight: var(--font-semibold); }
+.font-bold { font-weight: var(--font-bold); }
+
+/* Border Radius Utilities */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadow Utilities */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+
+/* Color Utilities */
+.bg-primary { background-color: var(--primary-500); }
+.bg-success { background-color: var(--success-500); }
+.bg-error { background-color: var(--error-500); }
+.bg-warning { background-color: var(--warning-500); }
+
+.text-primary { color: var(--primary-500); }
+.text-success { color: var(--success-500); }
+.text-error { color: var(--error-500); }
+.text-warning { color: var(--warning-500); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Border Utilities */
+.border { border: 1px solid var(--border); }
+.border-strong { border: 1px solid var(--border-strong); }
+
+/* ===== COMPONENT CLASSES ===== */
+
+/* Enhanced Card Component */
+.crypto-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
+}
+
+.crypto-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.crypto-card--interactive {
+  cursor: pointer;
+}
+
+.crypto-card--interactive:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  border-color: var(--crypto-gold);
+  background-color: var(--surface-secondary);
+}
+
+.crypto-card--interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.crypto-card--accent {
+  border-color: var(--crypto-gold);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+}
+
+.crypto-card--chart {
+  background-color: var(--crypto-chart-bg);
+  border-color: var(--crypto-chart-grid);
+}
+
+/* === PROFESSIONAL TRADING CARDS === */
+
+/* Portfolio summary card (hero display) */
+.crypto-card--hero {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+  border: 1px solid var(--crypto-gold);
+  padding: var(--space-8);
+  position: relative;
+  overflow: hidden;
+}
+
+.crypto-card--hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top right, rgba(240, 185, 11, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Metric cards (win rate, active signals, etc.) */
+.crypto-card--metric {
+  text-align: center;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.crypto-card--metric:hover {
+  border-color: var(--crypto-gold);
+  background-color: var(--surface-secondary);
+  transform: translateY(-1px);
+}
+
+.crypto-card--metric .metric-value {
+  display: block;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  line-height: 1.1;
+  margin-bottom: var(--space-2);
+}
+
+.crypto-card--metric .metric-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Price cards (current crypto prices) */
+.crypto-card--price {
+  padding: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 3px solid var(--border);
+  transition: all var(--transition-fast);
+}
+
+.crypto-card--price:hover {
+  border-left-color: var(--crypto-gold);
+  background-color: var(--surface-secondary);
+}
+
+.crypto-card--price.positive {
+  border-left-color: var(--crypto-green);
+}
+
+.crypto-card--price.negative {
+  border-left-color: var(--crypto-red);
+}
+
+/* Signal cards */
+.crypto-card--signal {
+  border-left: 4px solid var(--border-strong);
+  padding: var(--space-4);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.crypto-card--signal:hover {
+  border-left-color: var(--crypto-gold);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+  transform: translateX(2px);
+}
+
+.crypto-card--signal.signal-buy {
+  border-left-color: var(--crypto-green);
+}
+
+.crypto-card--signal.signal-sell {
+  border-left-color: var(--crypto-red);
+}
+
+.crypto-card--signal.signal-hold {
+  border-left-color: var(--crypto-gold);
+}
+
+/* Compact card variant for mobile/tables */
+.crypto-card--compact {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Loading card state */
+.crypto-card--loading {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.crypto-card--loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Professional shadows and depth */
+.crypto-card--elevated {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.crypto-card--elevated:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* Error state card */
+.crypto-card--error {
+  border-color: var(--crypto-red);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(244, 67, 54, 0.05) 100%);
+}
+
+/* Enhanced Button Component */
+.crypto-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-tight);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  min-height: 44px; /* Touch-friendly */
+}
+
+.crypto-button--primary {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.crypto-button--primary:hover {
+  background-color: var(--primary-600);
+}
+
+.crypto-button--primary:active {
+  background-color: var(--primary-700);
+}
+
+.crypto-button--secondary {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.crypto-button--secondary:hover {
+  background-color: var(--surface-secondary);
+  border-color: var(--border-strong);
+}
+
+.crypto-button--success {
+  background-color: var(--success-500);
+  color: white;
+}
+
+.crypto-button--success:hover {
+  background-color: var(--success-600);
+}
+
+.crypto-button--error {
+  background-color: var(--error-500);
+  color: white;
+}
+
+.crypto-button--error:hover {
+  background-color: var(--error-600);
+}
+
+.crypto-button--crypto {
+  background: linear-gradient(135deg, var(--crypto-gold) 0%, var(--crypto-gold-hover) 100%);
+  color: #000000;
+  font-weight: var(--font-semibold);
+}
+
+.crypto-button--crypto:hover {
+  background: linear-gradient(135deg, var(--crypto-gold-hover) 0%, var(--crypto-gold) 100%);
+  box-shadow: 0 4px 20px rgba(240, 185, 11, 0.3);
+}
+
+.crypto-button--outline {
+  background-color: transparent;
+  color: var(--text);
+  border: 2px solid var(--border-strong);
+}
+
+.crypto-button--outline:hover {
+  background-color: var(--surface-secondary);
+  border-color: var(--crypto-gold);
+  color: var(--crypto-gold);
+}
+
+/* Loading State */
+.crypto-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.crypto-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top: 2px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Skeleton Loading */
+.crypto-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-secondary) 25%,
+    var(--border) 50%,
+    var(--surface-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive Grid System */
+.crypto-grid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.crypto-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.crypto-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.crypto-grid--4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  :root {
+    --space-6: 16px; /* Reduce spacing on mobile */
+    --space-8: 24px;
+    --space-12: 32px;
+  }
+  
+  .crypto-card {
+    padding: var(--space-4);
+  }
+  
+  .crypto-grid--2,
+  .crypto-grid--3,
+  .crypto-grid--4 {
+    grid-template-columns: 1fr;
+  }
+  
+  .crypto-button {
+    min-height: 48px; /* Larger touch targets on mobile */
+    padding: var(--space-4) var(--space-5);
+  }
+}
+
+/* Tablet Responsive */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .crypto-grid--3,
+  .crypto-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Focus States for Accessibility */
+.crypto-button:focus,
+.crypto-card--interactive:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #000000;
+    --border-strong: #000000;
+  }
+  
+  [data-theme="dark"] {
+    --border: #ffffff;
+    --border-strong: #ffffff;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .crypto-card,
+  .crypto-button,
+  .crypto-spinner {
+    animation: none;
+    transition: none;
+  }
+  
+  .crypto-card:hover,
+  .crypto-card--interactive:hover {
+    transform: none;
+  }
+}
+
+/* ===== CRYPTO-SPECIFIC DARK THEME ENHANCEMENTS ===== */
+
+/* Global body styling */
+body {
+  background: linear-gradient(135deg, var(--background) 0%, #0f1419 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Crypto price colors */
+.crypto-price-up {
+  color: var(--crypto-green);
+}
+
+.crypto-price-down {
+  color: var(--crypto-red);
+}
+
+.crypto-price-neutral {
+  color: var(--text-secondary);
+}
+
+/* Trading signal badges */
+.crypto-signal-buy {
+  background: linear-gradient(135deg, var(--success-500) 0%, var(--crypto-green) 100%);
+  color: #000000;
+  font-weight: var(--font-semibold);
+}
+
+.crypto-signal-sell {
+  background: linear-gradient(135deg, var(--error-500) 0%, var(--crypto-red) 100%);
+  color: #ffffff;
+  font-weight: var(--font-semibold);
+}
+
+.crypto-signal-hold {
+  background: linear-gradient(135deg, var(--warning-500) 0%, var(--crypto-gold) 100%);
+  color: #000000;
+  font-weight: var(--font-semibold);
+}
+
+/* Chart container enhancements */
+.crypto-chart-container {
+  background: var(--crypto-chart-bg);
+  border: 1px solid var(--crypto-chart-grid);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+.crypto-chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(240, 185, 11, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Enhanced scrollbars for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--crypto-gold);
+}
+
+/* Selection styling */
+::selection {
+  background: var(--crypto-gold);
+  color: #000000;
+}
+
+::-moz-selection {
+  background: var(--crypto-gold);
+  color: #000000;
+}
+
+/* Focus ring improvements */
+.crypto-focus-ring {
+  outline: 2px solid var(--crypto-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+/* Glass morphism effects */
+.crypto-glass {
+  background: rgba(26, 31, 40, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+/* Animated gradients */
+.crypto-gradient-animated {
+  background: linear-gradient(
+    45deg,
+    var(--crypto-gold),
+    var(--crypto-green),
+    var(--primary-500),
+    var(--crypto-gold)
+  );
+  background-size: 300% 300%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Status indicators */
+.crypto-status-online {
+  color: var(--crypto-green);
+}
+
+.crypto-status-offline {
+  color: var(--crypto-red);
+}
+
+.crypto-status-warning {
+  color: var(--crypto-gold);
+}
+
+/* Enhanced shadows for dark theme */
+.crypto-shadow-glow {
+  box-shadow: 
+    0 0 20px rgba(240, 185, 11, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== PROFESSIONAL TRADING LAYOUT ===== */
+
+/* Main trading layout container */
+.trading-layout {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);
+}
+
+/* Professional trading grid system */
+.trading-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 
+    "header header"
+    "main sidebar";
+  gap: var(--space-6);
+  height: 100vh;
+  padding: var(--space-6);
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+/* Trading header area */
+.trading-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Main content area (charts, primary data) */
+.trading-main-area {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-height: 0; /* Allow flex items to shrink */
+}
+
+/* Sidebar areas */
+.trading-sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sidebar-narrow { width: 280px; }
+.sidebar-normal { width: 320px; }
+.sidebar-wide { width: 380px; }
+
+/* Metric strip (quick stats) */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* Trading card grids */
+.trading-card-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.trading-card-grid.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.trading-card-grid.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.trading-card-grid.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.trading-card-grid.gap-sm {
+  gap: var(--space-3);
+}
+
+.trading-card-grid.gap-md {
+  gap: var(--space-4);
+}
+
+.trading-card-grid.gap-lg {
+  gap: var(--space-6);
+}
+
+/* Responsive trading layout */
+@media (max-width: 1200px) {
+  .trading-grid {
+    grid-template-columns: 1fr 280px;
+  }
+  
+  .trading-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .trading-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "header"
+      "main"
+      "sidebar";
+    height: auto;
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+  
+  .trading-sidebar {
+    width: 100%;
+  }
+  
+  .metric-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+  
+  .trading-card-grid.grid-cols-2,
+  .trading-card-grid.grid-cols-3,
+  .trading-card-grid.grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================================
+   LOADING STATES & MICRO-INTERACTIONS
+   =========================================== */
+
+/* Enhanced skeleton loading */
+.crypto-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-secondary) 0%,
+    var(--surface) 50%,
+    var(--surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: crypto-skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes crypto-skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.price-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--crypto-gold-muted) 0%,
+    var(--crypto-gold) 50%,
+    var(--crypto-gold-muted) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.chart-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--success-muted) 0%,
+    var(--success) 50%,
+    var(--success-muted) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Spinner animations */
+.crypto-spinner {
+  display: inline-block;
+  color: var(--primary);
+}
+
+/* Pulse loading dots */
+.crypto-pulse {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
+}
+
+.crypto-pulse__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: crypto-pulse-dot 1.4s ease-in-out infinite both;
+}
+
+.crypto-pulse__dot:nth-child(1) { animation-delay: -0.32s; }
+.crypto-pulse__dot:nth-child(2) { animation-delay: -0.16s; }
+.crypto-pulse__dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes crypto-pulse-dot {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.crypto-pulse--primary .crypto-pulse__dot {
+  background-color: var(--primary);
+}
+
+.crypto-pulse--success .crypto-pulse__dot {
+  background-color: var(--success);
+}
+
+.crypto-pulse--warning .crypto-pulse__dot {
+  background-color: var(--warning);
+}
+
+.crypto-pulse--danger .crypto-pulse__dot {
+  background-color: var(--danger);
+}
+
+/* Progress bar */
+.crypto-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.crypto-progress__track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--surface-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.crypto-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+  animation: crypto-progress-shine 2s ease-in-out infinite;
+}
+
+@keyframes crypto-progress-shine {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+.crypto-progress__text {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  text-align: center;
+}
+
+/* Chart loading animations */
+.chart-loading-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding: var(--space-4);
+  overflow: hidden;
+}
+
+.chart-loading-grid {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  gap: 2px;
+}
+
+.chart-loading-candlestick {
+  width: 8px;
+  background: linear-gradient(
+    to top,
+    var(--success) 0%,
+    var(--success-muted) 50%,
+    var(--danger) 100%
+  );
+  border-radius: 2px;
+  animation: crypto-candlestick-pulse 2s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@keyframes crypto-candlestick-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.chart-loading-line {
+  width: 100%;
+  height: 100%;
+  color: var(--primary);
+}
+
+.chart-loading-path {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: crypto-line-draw 3s ease-in-out infinite;
+}
+
+@keyframes crypto-line-draw {
+  0% { stroke-dashoffset: 400; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -400; }
+}
+
+.chart-loading-area {
+  width: 100%;
+  height: 100%;
+  color: var(--success);
+}
+
+.chart-loading-area-path {
+  animation: crypto-area-fade 2s ease-in-out infinite;
+}
+
+@keyframes crypto-area-fade {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+/* Interactive micro-interactions */
+.crypto-card--interactive {
+  cursor: pointer;
+  transition: all var(--transition-fast) var(--ease-smooth);
+}
+
+.crypto-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-muted);
+}
+
+.crypto-card--interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Button micro-interactions */
+.crypto-button {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast) var(--ease-smooth);
+}
+
+.crypto-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.crypto-button:active {
+  transform: translateY(0);
+}
+
+.crypto-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal) var(--ease-smooth);
+  transform: translate(-50%, -50%);
+}
+
+.crypto-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Loading state modifiers */
+.card-loading {
+  position: relative;
+}
+
+.card-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  animation: crypto-loading-shine 2s ease-in-out infinite;
+}
+
+.signal-loading {
+  background: var(--surface-secondary);
+  animation: crypto-signal-pulse 1s ease-in-out infinite;
+}
+
+@keyframes crypto-loading-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes crypto-signal-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Focus states for accessibility */
+.crypto-interactive:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .crypto-skeleton,
+  .crypto-pulse__dot,
+  .chart-loading-candlestick,
+  .chart-loading-path,
+  .chart-loading-area-path,
+  .crypto-progress__bar,
+  .crypto-card--interactive,
+  .crypto-button {
+    animation: none;
+  }
+  
+  .crypto-card--interactive:hover,
+  .crypto-button:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .trading-grid {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+  
+  .metric-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Professional section headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* Quick action bar */
+.quick-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-secondary);
+}
+
+.status-indicator.online {
+  color: var(--crypto-green);
+  background: rgba(3, 218, 198, 0.1);
+}
+
+.status-indicator.offline {
+  color: var(--crypto-red);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.status-indicator.warning {
+  color: var(--crypto-gold);
+  background: rgba(240, 185, 11, 0.1);
+}
+
+/* Professional scrollbars for layout containers */
+.trading-sidebar::-webkit-scrollbar,
+.trading-main-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.trading-sidebar::-webkit-scrollbar-track,
+.trading-main-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trading-sidebar::-webkit-scrollbar-thumb,
+.trading-main-area::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.trading-sidebar::-webkit-scrollbar-thumb:hover,
+.trading-main-area::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* ===== PROFESSIONAL MICRO-INTERACTIONS ===== */
+
+/* Pulse animation for live data */
+.crypto-pulse {
+  animation: crypto-pulse 2s ease-in-out infinite;
+}
+
+@keyframes crypto-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+/* Number change animations */
+.crypto-number-up {
+  animation: number-flash-green 0.6s ease-out;
+}
+
+.crypto-number-down {
+  animation: number-flash-red 0.6s ease-out;
+}
+
+@keyframes number-flash-green {
+  0% { background-color: transparent; color: var(--text); }
+  30% { background-color: rgba(3, 218, 198, 0.2); color: var(--crypto-green); }
+  100% { background-color: transparent; color: var(--crypto-green); }
+}
+
+@keyframes number-flash-red {
+  0% { background-color: transparent; color: var(--text); }
+  30% { background-color: rgba(244, 67, 54, 0.2); color: var(--crypto-red); }
+  100% { background-color: transparent; color: var(--crypto-red); }
+}
+
+/* Button press animation */
+.crypto-button:active {
+  animation: button-press 0.1s ease-out;
+}
+
+@keyframes button-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Card hover lift effect */
+.crypto-lift:hover {
+  transform: translateY(-2px) scale(1.01);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glow effect on focus/hover */
+.crypto-glow:focus,
+.crypto-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(240, 185, 11, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading dots animation */
+.crypto-loading-dots::after {
+  content: '';
+  display: inline-block;
+  animation: loading-dots 1.4s infinite both;
+}
+
+@keyframes loading-dots {
+  0%, 80%, 100% { content: ''; }
+  20% { content: '.'; }
+  40% { content: '..'; }
+  60% { content: '...'; }
+}
+
+/* Slide-in animations for new content */
+.crypto-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in animation */
+.crypto-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Shake animation for errors */
+.crypto-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+  40%, 60% { transform: translate3d(2px, 0, 0); }
+}
+
+/* Professional typewriter effect */
+.crypto-typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 2s steps(20) forwards, blink 1s infinite;
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 50% { border-right: 2px solid var(--crypto-gold); }
+  51%, 100% { border-right: none; }
+}
+
+/* Chart data point highlight */
+.crypto-data-highlight {
+  position: relative;
+}
+
+.crypto-data-highlight::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: radial-gradient(circle, rgba(240, 185, 11, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: data-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes data-pulse {
+  0%, 100% { opacity: 0; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Status change animations */
+.status-online {
+  animation: status-online 0.3s ease-out;
+}
+
+.status-offline {
+  animation: status-offline 0.3s ease-out;
+}
+
+@keyframes status-online {
+  0% { background-color: var(--surface-secondary); }
+  50% { background-color: rgba(3, 218, 198, 0.2); }
+  100% { background-color: rgba(3, 218, 198, 0.1); }
+}
+
+@keyframes status-offline {
+  0% { background-color: var(--surface-secondary); }
+  50% { background-color: rgba(244, 67, 54, 0.2); }
+  100% { background-color: rgba(244, 67, 54, 0.1); }
+}
+
+/* Progressive loading bar */
+.crypto-progress-bar {
+  background: var(--surface-secondary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  height: 4px;
+  position: relative;
+}
+
+.crypto-progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--crypto-gold), var(--crypto-green));
+  border-radius: inherit;
+  animation: progress-bar 2s ease-in-out forwards;
+}
+
+@keyframes progress-bar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Utility classes for common animations */
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Accessibility: Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .crypto-pulse,
+  .crypto-number-up,
+  .crypto-number-down,
+  .crypto-lift:hover,
+  .crypto-slide-in,
+  .crypto-fade-in,
+  .crypto-typewriter,
+  .crypto-data-highlight::before,
+  .status-online,
+  .status-offline,
+  .crypto-progress-bar::before,
+  .animate-bounce,
+  .animate-spin-slow,
+  .animate-fade-in-up {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .crypto-lift:hover {
+    transform: none !important;
+  }
+}
