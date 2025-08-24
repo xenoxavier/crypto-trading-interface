@@ -921,7 +921,7 @@ export default function DashboardPage() {
         for (let i = 0; i < importedPortfolio.holdings.length; i++) {
           const holding = importedPortfolio.holdings[i];
           console.log(`Validating holding ${i + 1}:`, holding);
-          if (!holding.symbol || holding.quantity == null || holding.averagePrice == null) {
+          if (!holding.symbol || holding.quantity == null || holding.averageBuyPrice == null) {
             console.error(`Invalid holding at position ${i + 1}:`, holding);
             throw new Error(`Invalid holding data at position ${i + 1}`);
           }
@@ -930,6 +930,9 @@ export default function DashboardPage() {
         console.log('All validations passed, updating prices...');
         // Update current prices for imported holdings
         await updatePortfolioPrices(importedPortfolio);
+        
+        // Set the imported portfolio as the current portfolio
+        setPortfolio(importedPortfolio);
         
         console.log('Portfolio imported successfully:', importedPortfolio);
         alert(`Portfolio imported successfully!\n\nImported from: ${importData.exportDate ? new Date(importData.exportDate).toLocaleDateString() : 'Unknown date'}\nHoldings: ${importedPortfolio.holdings.length}\nTotal Value: ${formatCurrency(convertFromUSD(importedPortfolio.totalValue, selectedCurrency))}`);

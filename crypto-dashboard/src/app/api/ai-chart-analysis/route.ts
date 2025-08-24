@@ -22,6 +22,14 @@ interface AISettings {
   customPrompt: string;
 }
 
+interface PortfolioHolding {
+  symbol: string;
+  amount: number;
+  averagePrice: number;
+  currentValue: number;
+  isHolding: boolean;
+}
+
 // Calculate technical indicators
 function calculateRSI(prices: number[], period: number = 14): number {
   if (prices.length < period + 1) return 50; // Default neutral RSI
@@ -95,7 +103,11 @@ function calculateVolatility(prices: number[], period: number = 20): number {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { chartData, aiSettings }: { chartData: ChartData; aiSettings: AISettings } = body;
+    const { chartData, aiSettings, portfolioHolding }: { 
+      chartData: ChartData; 
+      aiSettings: AISettings;
+      portfolioHolding?: PortfolioHolding;
+    } = body;
 
     // Validate input
     if (!chartData || !chartData.candlesticks || chartData.candlesticks.length === 0) {
@@ -163,25 +175,79 @@ export async function POST(request: NextRequest) {
       }))
     };
 
+    // Portfolio context information
+    const portfolioContext = portfolioHolding ? {
+      isHolding: portfolioHolding.isHolding,
+      amount: portfolioHolding.amount,
+      averagePrice: portfolioHolding.averagePrice,
+      currentValue: portfolioHolding.currentValue,
+      profitLoss: portfolioHolding.currentValue - (portfolioHolding.amount * portfolioHolding.averagePrice),
+      profitLossPercent: ((chartData.currentPrice - portfolioHolding.averagePrice) / portfolioHolding.averagePrice * 100)
+    } : null;
+
     // Create AI prompt
     const systemPrompt = `You are an expert cryptocurrency technical analyst. Analyze the provided chart data and generate a trading signal.
+
+${portfolioContext ? `
+PORTFOLIO-AWARE ANALYSIS:
+- The user ${portfolioContext.isHolding ? 'CURRENTLY HOLDS' : 'DOES NOT HOLD'} this cryptocurrency
+${portfolioContext.isHolding ? `
+- Holding Amount: ${portfolioContext.amount} ${chartData.symbol}
+- Average Purchase Price: $${portfolioContext.averagePrice}
+- Current Value: $${portfolioContext.currentValue}
+- Profit/Loss: ${portfolioContext.profitLoss >= 0 ? '+' : ''}$${portfolioContext.profitLoss.toFixed(2)} (${portfolioContext.profitLossPercent.toFixed(2)}%)
+
+PROVIDE DUAL HOLDING-SPECIFIC RECOMMENDATIONS:
+- Separate advice for EXISTING holdings vs NEW purchases
+- Examples:
+  * Strong uptrend: "HOLD current + BUY_MORE" 
+  * Moderate uptrend: "HOLD current + WAIT_FOR_DIP"
+  * Sideways/uncertain: "HOLD current + DONT_BUY"
+  * Downtrend with small loss: "HOLD current + DONT_BUY" 
+  * Major downtrend: "SELL current + DONT_BUY"
+  * Taking profits: "TAKE_PARTIAL_PROFITS + DONT_BUY"
+- Always provide both holdingAdvice and buyingAdvice with reasoning
+` : `
+PROVIDE ENTRY-FOCUSED RECOMMENDATIONS:
+- If technical analysis suggests good entry opportunity: recommend BUY/STRONG_BUY with clear entry price
+- If technical analysis suggests poor timing: recommend WAIT or provide target entry price
+- Focus on optimal entry points since user doesn't currently hold
+`}
+` : ''}
 
 IMPORTANT: You must respond with a valid JSON object only. No additional text or explanation outside the JSON.
 
 The JSON must have this exact structure:
 {
-  "signal": "BUY" | "SELL" | "HOLD" | "STRONG_BUY" | "STRONG_SELL",
+  "signal": "BUY" | "SELL" | "HOLD" | "STRONG_BUY" | "STRONG_SELL" | "ACCUMULATE" | "WAIT" | "HOLD_AND_BUY" | "HOLD_DONT_BUY",
   "confidence": number (1-10),
   "entryPrice": number,
   "stopLoss": number,
   "takeProfit": number,
   "riskReward": number,
-  "analysis": "Brief 2-3 sentence explanation of the signal reasoning"
+  "analysis": "Brief 2-3 sentence explanation considering current holding status and technical analysis",
+  "recommendation": "Specific action advice: 'Hold your position' or 'Consider buying at $X' or 'Take profits' etc.",
+  "dualAction": {
+    "holdingAdvice": "What to do with current position: HOLD | SELL | TAKE_PARTIAL_PROFITS",
+    "buyingAdvice": "Whether to add to position: BUY_MORE | DONT_BUY | WAIT_FOR_DIP",
+    "reasoning": "Brief explanation for dual advice"
+  }
 }`;
 
     const userPrompt = `${aiSettings.customPrompt}
 
 Current Chart Analysis for ${analysisData.symbol}:
+
+${portfolioContext ? `
+**Portfolio Status:**
+- Currently Holding: ${portfolioContext.isHolding ? 'YES' : 'NO'}
+${portfolioContext.isHolding ? `
+- Amount: ${portfolioContext.amount} ${chartData.symbol}
+- Average Buy Price: $${portfolioContext.averagePrice}
+- Current Value: $${portfolioContext.currentValue}
+- Unrealized P&L: ${portfolioContext.profitLoss >= 0 ? '+' : ''}$${portfolioContext.profitLoss.toFixed(2)} (${portfolioContext.profitLossPercent.toFixed(2)}%)
+` : '- Ready to enter position if opportunity arises'}
+` : ''}
 
 **Market Data:**
 - Current Price: $${analysisData.currentPrice}
@@ -210,7 +276,17 @@ ${analysisData.recentCandles.map(candle =>
   `${candle.time}: O:$${candle.open} H:$${candle.high} L:$${candle.low} C:$${candle.close} V:${candle.volume}`
 ).join('\n')}
 
-Based on this technical analysis, provide a trading signal with confidence score and detailed reasoning.`;
+Based on this technical analysis, provide a trading signal with confidence score and detailed reasoning.
+
+${portfolioContext && portfolioContext.isHolding ? `
+**DUAL RECOMMENDATION REQUIRED:**
+Provide separate advice for:
+1. What to do with EXISTING ${portfolioContext.amount} ${chartData.symbol} (HOLD/SELL/TAKE_PARTIAL_PROFITS)
+2. Whether to BUY MORE at current levels (BUY_MORE/DONT_BUY/WAIT_FOR_DIP)
+3. Clear reasoning for both decisions
+` : ''}
+
+Remember to fill both the main signal AND the dualAction object with specific recommendations.`;
 
     // Call OpenRouter API
     const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
