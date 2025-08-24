@@ -25,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "firebase": "^12.1.0",
     "ioredis": "^5.7.0",
     "lightweight-charts": "^5.0.8",
     "lucide-react": "^0.541.0",

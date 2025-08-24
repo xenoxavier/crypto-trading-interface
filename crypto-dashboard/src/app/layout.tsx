@@ -3,8 +3,10 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import '@/styles/design-system.css'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { FirebaseAuthProvider } from '@/components/providers/FirebaseAuthProvider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { SecurityProvider } from '@/components/providers/SecurityProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,11 +29,15 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </QueryProvider>
+          <SecurityProvider>
+            <QueryProvider>
+              <AuthProvider>
+                <FirebaseAuthProvider>
+                  {children}
+                </FirebaseAuthProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </SecurityProvider>
         </ThemeProvider>
       </body>
     </html>

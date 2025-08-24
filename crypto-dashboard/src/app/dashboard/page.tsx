@@ -2,10 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/providers/FirebaseAuthProvider';
+import { UserDropdown } from '@/components/ui/UserDropdown';
+import { UserDataDebug } from '@/components/debug/UserDataDebug';
+import { DemoModeNotice } from '@/components/ui/DemoModeNotice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SimpleChart } from '@/components/charts/SimpleChart';
 import SettingsModal from '@/components/Settings';
+import { ImportConfirmDialog } from '@/components/ui/ImportConfirmDialog';
+import { useSecurePortfolio } from '@/hooks/useSecurePortfolio';
+import { 
+  saveUserData, 
+  loadUserData, 
+  getUserInfo, 
+  migrateToUserStorage 
+} from '@/lib/user-storage';
+import { 
+  incrementAiUsage, 
+  getUsageStats,
+  checkAndUpgradeTier 
+} from '@/lib/user-tiers';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -76,26 +93,37 @@ interface ExchangeRates {
   [key: string]: number;
 }
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { data: session, status } = useSession();
+  const { user: firebaseUser } = useAuth();
+  
+  // Get user info for data isolation
+  const userInfo = getUserInfo(firebaseUser, session?.user || null);
+  
+  // Get usage stats
+  const usageStats = getUsageStats(firebaseUser, session?.user || null);
   const [selectedSymbol, setSelectedSymbol] = useState('BTC');
   const chartRef = React.useRef<any>(null);
   const [priceData, setPriceData] = useState<PriceData[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [aiSignals, setAiSignals] = useState<any[]>([]);
-  // Initialize with a default portfolio to avoid null state
-  const [portfolio, setPortfolio] = useState<Portfolio | null>({
-    id: '1',
-    name: 'My Portfolio',
-    totalValue: 0,
-    totalPnL: 0,
-    totalPnLPercent: 0,
-    holdings: [],
-    baseCurrency: 'USD'
-  });
+  
+  // Use secure portfolio hook
+  const { 
+    portfolio, 
+    setPortfolio, 
+    loading: portfolioLoading, 
+    importPortfolio: secureImportPortfolio,
+    checkImportConflicts,
+    exportPortfolio: secureExportPortfolio,
+    isEncrypted 
+  } = useSecurePortfolio();
+  
   const [loading, setLoading] = useState(true);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [editingHolding, setEditingHolding] = useState<PortfolioHolding | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState<any>(null);
   const [newHolding, setNewHolding] = useState({
     symbol: '',
     quantity: '',
@@ -119,8 +147,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === 'loading') return;
     
+    // Migrate existing data to user-specific storage
+    migrateToUserStorage(firebaseUser, session?.user || null);
+    
     // Always initialize dashboard data, regardless of session (for demo mode)
-    console.log('Initializing dashboard data. Session:', !!session, 'Status:', status);
+    console.log('Initializing dashboard data. User:', userInfo.name, 'Status:', status);
     loadDashboardData();
     
     // Load exchange rates and supported currencies
@@ -136,20 +167,20 @@ export default function DashboardPage() {
   }, [status]); // Removed session dependency to work in demo mode
   
   useEffect(() => {
-    // Load saved currency preference
-    const savedCurrency = localStorage.getItem('preferred_currency');
+    // Load saved currency preference (user-specific)
+    const savedCurrency = loadUserData('preferred_currency', firebaseUser, session?.user || null, 'USD');
     if (savedCurrency) {
       setSelectedCurrency(savedCurrency);
     }
-  }, []);
+  }, [firebaseUser, session]);
   
   useEffect(() => {
-    // Save currency preference and update portfolio display
-    localStorage.setItem('preferred_currency', selectedCurrency);
+    // Save currency preference (user-specific) and update portfolio display
+    saveUserData('preferred_currency', selectedCurrency, firebaseUser, session?.user || null);
     if (portfolio && exchangeRates[selectedCurrency]) {
       // Portfolio will automatically update via conversion functions
     }
-  }, [selectedCurrency, exchangeRates]);
+  }, [selectedCurrency, exchangeRates, firebaseUser, session]);
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -384,17 +415,14 @@ export default function DashboardPage() {
 
   const loadAISignals = () => {
     try {
-      const savedSignals = localStorage.getItem('ai_signals');
-      if (savedSignals) {
-        const parsed = JSON.parse(savedSignals);
-        // Filter out expired signals (older than 7 days)
-        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-        const validSignals = parsed.filter((signal: any) => 
-          new Date(signal.createdAt).getTime() > sevenDaysAgo
-        );
-        setAiSignals(validSignals);
-        console.log('Loaded AI signals from localStorage:', validSignals.length);
-      }
+      const savedSignals = loadUserData('ai_signals', firebaseUser, session?.user || null, []);
+      // Filter out expired signals (older than 7 days)
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const validSignals = savedSignals.filter((signal: any) => 
+        new Date(signal.createdAt).getTime() > sevenDaysAgo
+      );
+      setAiSignals(validSignals);
+      console.log('Loaded AI signals for user:', userInfo.name, 'Count:', validSignals.length);
     } catch (error) {
       console.error('Error loading AI signals:', error);
       setAiSignals([]);
@@ -403,23 +431,22 @@ export default function DashboardPage() {
 
   const saveAISignals = (signals: any[]) => {
     try {
-      localStorage.setItem('ai_signals', JSON.stringify(signals));
-      console.log('AI signals saved to localStorage:', signals.length);
+      saveUserData('ai_signals', signals, firebaseUser, session?.user || null);
+      console.log('AI signals saved for user:', userInfo.name, 'Count:', signals.length);
     } catch (error) {
       console.error('Error saving AI signals:', error);
     }
   };
 
   const loadPortfolio = async () => {
-    console.log('Loading portfolio...');
+    console.log('Loading portfolio for user:', userInfo.name);
     try {
-      // Load from localStorage first
-      const savedPortfolio = localStorage.getItem('crypto_portfolio');
+      // Load from user-specific storage
+      const savedPortfolio = loadUserData('crypto_portfolio', firebaseUser, session?.user || null, null);
       if (savedPortfolio) {
-        console.log('Found saved portfolio:', savedPortfolio);
-        const portfolio = JSON.parse(savedPortfolio);
+        console.log('Found saved portfolio for user:', userInfo.name);
         // Update current prices and recalculate
-        await updatePortfolioPrices(portfolio);
+        await updatePortfolioPrices(savedPortfolio);
         return;
       }
       
@@ -455,7 +482,8 @@ export default function DashboardPage() {
   };
   
   const savePortfolio = (portfolio: Portfolio) => {
-    localStorage.setItem('crypto_portfolio', JSON.stringify(portfolio));
+    saveUserData('crypto_portfolio', portfolio, firebaseUser, session?.user || null);
+    console.log('Portfolio saved for user:', userInfo.name);
   };
   
   const updatePortfolioPrices = async (portfolio: Portfolio) => {
@@ -574,6 +602,12 @@ export default function DashboardPage() {
       if (aiResult.success && aiResult.data?.analysis) {
         const analysis = aiResult.data.analysis;
         
+        // Check AI usage limits and increment usage
+        const canUseAI = incrementAiUsage(firebaseUser, session?.user || null);
+        if (!canUseAI) {
+          throw new Error('Daily AI signal limit reached. Upgrade your plan or add your own API keys for unlimited access.');
+        }
+        
         // Create AI signal for display in Live Signals
         const aiSignal = {
           id: Date.now().toString(),
@@ -609,9 +643,14 @@ export default function DashboardPage() {
 
   const generateSignal = async (symbol: string) => {
     try {
-      // Get AI settings from localStorage
-      const aiSettingsStr = localStorage.getItem('ai_settings');
-      if (!aiSettingsStr) {
+      // Get AI settings from user-specific storage
+      const aiSettings = loadUserData('ai_settings', firebaseUser, session?.user || null, {
+        apiKey: '',
+        selectedModel: 'deepseek/deepseek-chat',
+        customPrompt: 'Analyze this cryptocurrency chart and provide a trading signal based on technical indicators.'
+      });
+      
+      if (!aiSettings || !aiSettings.apiKey) {
         // Fallback to traditional signal generation
         const response = await fetch('/api/signals', {
           method: 'POST',
@@ -631,7 +670,6 @@ export default function DashboardPage() {
         return;
       }
 
-      const aiSettings = JSON.parse(aiSettingsStr);
       if (!aiSettings.apiKey) {
         // Fallback to traditional signal generation
         const response = await fetch('/api/signals', {
@@ -927,15 +965,28 @@ export default function DashboardPage() {
           }
         }
         
-        console.log('All validations passed, updating prices...');
-        // Update current prices for imported holdings
-        await updatePortfolioPrices(importedPortfolio);
+        console.log('All validations passed, checking for conflicts...');
         
-        // Set the imported portfolio as the current portfolio
-        setPortfolio(importedPortfolio);
+        // Check for conflicts with existing data
+        const conflicts = checkImportConflicts(importData);
         
-        console.log('Portfolio imported successfully:', importedPortfolio);
-        alert(`Portfolio imported successfully!\n\nImported from: ${importData.exportDate ? new Date(importData.exportDate).toLocaleDateString() : 'Unknown date'}\nHoldings: ${importedPortfolio.holdings.length}\nTotal Value: ${formatCurrency(convertFromUSD(importedPortfolio.totalValue, selectedCurrency))}`);
+        if (conflicts.hasExistingData) {
+          // Show confirmation dialog
+          setPendingImportData(importData);
+          setShowImportDialog(true);
+          setImporting(false); // Stop loading indicator for dialog
+        } else {
+          // No conflicts, import directly
+          const result = await secureImportPortfolio(importData, 'overwrite');
+          if (result.success) {
+            // Update prices for imported holdings
+            if (portfolio) {
+              await updatePortfolioPrices(portfolio);
+            }
+            console.log('Portfolio imported successfully');
+            alert(`${result.message}!\n\nTotal holdings: ${result.holdingsCount}`);
+          }
+        }
         
       } catch (error) {
         console.error('Error importing portfolio:', error);
@@ -960,6 +1011,39 @@ export default function DashboardPage() {
     
     reader.readAsText(file);
   };
+
+  // Handle import confirmation
+  const handleImportConfirm = async (action: 'overwrite' | 'merge' | 'cancel') => {
+    if (!pendingImportData) return;
+    
+    try {
+      if (action === 'cancel') {
+        setPendingImportData(null);
+        return;
+      }
+
+      setImporting(true);
+      const result = await secureImportPortfolio(pendingImportData, action);
+      
+      if (result.success) {
+        // Update prices for imported holdings
+        if (portfolio) {
+          await updatePortfolioPrices(portfolio);
+        }
+        alert(`${result.message}!\n\nTotal holdings: ${result.holdingsCount}`);
+      }
+    } catch (error) {
+      console.error('Error during import confirmation:', error);
+      if (error instanceof Error) {
+        alert(`Failed to import portfolio:\n\n${error.message}`);
+      } else {
+        alert('Failed to import portfolio. Please try again.');
+      }
+    } finally {
+      setImporting(false);
+      setPendingImportData(null);
+    }
+  };
   
   const triggerImport = () => {
     const input = document.createElement('input');
@@ -978,9 +1062,9 @@ export default function DashboardPage() {
   }
 
   // Demo mode - allow access without authentication
-  const isDemoMode = !session;
-  const displayName = session?.user?.name || 'Demo User';
-  const displayImage = session?.user?.image || 'https://ui-avatars.com/api/?name=Demo+User&background=3b82f6&color=fff';
+  const isDemoMode = !session && !firebaseUser;
+  const displayName = session?.user?.name || firebaseUser?.displayName || 'Demo User';
+  const displayImage = session?.user?.image || firebaseUser?.photoURL || 'https://ui-avatars.com/api/?name=Demo+User&background=3b82f6&color=fff';
 
   const totalPnLPercent = portfolio?.totalPnLPercent || 0;
 
@@ -998,6 +1082,26 @@ export default function DashboardPage() {
               {isDemoMode && (
                 <div className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                   DEMO MODE
+                </div>
+              )}
+              
+              {/* Tier Badge */}
+              <div className={`px-2 py-1 text-xs rounded-full font-medium ${
+                usageStats.tier === 'unlimited' 
+                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  : usageStats.tier === 'premium'
+                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+              }`}>
+                {usageStats.tier === 'unlimited' ? '👑 UNLIMITED' : 
+                 usageStats.tier === 'premium' ? '⭐ PREMIUM' : 
+                 '⚡ FREE'}
+              </div>
+              
+              {/* Usage indicator for free/premium tiers */}
+              {(usageStats.tier !== 'unlimited' && usageStats.apiCalls.limit > 0) && (
+                <div className="text-xs text-muted-foreground">
+                  API: {usageStats.apiCalls.used}/{usageStats.apiCalls.limit}
                 </div>
               )}
               <Button variant="outline" size="sm">
@@ -1033,14 +1137,10 @@ export default function DashboardPage() {
                 <SettingsIcon className="h-4 w-4 mr-2" />
                 Settings
               </Button>
-              <div className="flex items-center space-x-2">
-                <img 
-                  src={displayImage} 
-                  alt="Profile" 
-                  className="w-8 h-8 rounded-full"
-                />
-                <span className="text-sm font-medium">{displayName}</span>
-              </div>
+              <UserDropdown 
+                displayName={displayName}
+                displayImage={displayImage}
+              />
             </div>
           </div>
         </div>
@@ -1146,15 +1246,14 @@ export default function DashboardPage() {
                     size="sm" 
                     onClick={() => {
                       // Check if AI settings are configured
-                      const aiSettingsStr = localStorage.getItem('ai_settings');
-                      if (!aiSettingsStr) {
-                        alert('Please configure AI settings first. Click Settings to add your OpenRouter API key.');
-                        setShowSettings(true);
-                        return;
-                      }
-                      const aiSettings = JSON.parse(aiSettingsStr);
+                      const aiSettings = loadUserData('ai_settings', firebaseUser, session?.user || null, {
+                        apiKey: '',
+                        selectedModel: 'deepseek/deepseek-chat',
+                        customPrompt: 'Analyze this cryptocurrency chart and provide a trading signal based on technical indicators.'
+                      });
+                      
                       if (!aiSettings.apiKey) {
-                        alert('Please add your OpenRouter API key in Settings.');
+                        alert('Please configure AI settings first. Click Settings to add your OpenRouter API key.');
                         setShowSettings(true);
                         return;
                       }
@@ -1243,6 +1342,9 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
+
+        {/* Demo Mode Notice */}
+        <DemoModeNotice />
 
         {/* Market Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1581,6 +1683,30 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Import Confirmation Dialog */}
+      <ImportConfirmDialog
+        isOpen={showImportDialog}
+        onClose={() => {
+          setShowImportDialog(false);
+          setPendingImportData(null);
+        }}
+        onConfirm={handleImportConfirm}
+        importData={pendingImportData}
+        currentData={portfolio ? {
+          name: portfolio.name,
+          holdingsCount: portfolio.holdings.length,
+          totalValue: portfolio.totalValue
+        } : null}
+      />
+      
+      {/* Debug Component - Remove in production */}
+      <UserDataDebug />
     </div>
   );
+}
+
+export default function DashboardPage() {
+  // Allow demo access - no authentication required
+  return <DashboardPageContent />;
 }

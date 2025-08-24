@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TierStatus } from '@/components/ui/TierStatus';
+import { ApiKeysSettings } from '@/components/settings/ApiKeysSettings';
 import { 
   Settings, 
   Brain, 
@@ -101,6 +103,7 @@ interface SettingsProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsProps) {
+  const [activeTab, setActiveTab] = useState<'usage' | 'api-keys' | 'ai-settings'>('usage');
   const [aiSettings, setAiSettings] = useState<AISettings>({
     apiKey: '',
     selectedModel: 'deepseek/deepseek-chat',
@@ -201,9 +204,56 @@ export default function SettingsModal({ isOpen, onClose }: SettingsProps) {
           </Button>
         </div>
 
-        <div className="p-6 space-y-8">
-          {/* AI Configuration Section */}
-          <Card>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab('usage')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'usage'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              Usage & Tier
+            </button>
+            <button
+              onClick={() => setActiveTab('api-keys')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'api-keys'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              API Keys
+            </button>
+            <button
+              onClick={() => setActiveTab('ai-settings')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'ai-settings'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              AI Settings
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Usage & Tier Tab */}
+          {activeTab === 'usage' && (
+            <TierStatus onUpgrade={() => setActiveTab('api-keys')} />
+          )}
+
+          {/* API Keys Tab */}
+          {activeTab === 'api-keys' && (
+            <ApiKeysSettings />
+          )}
+
+          {/* AI Settings Tab */}
+          {activeTab === 'ai-settings' && (
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-purple-500" />
@@ -341,17 +391,20 @@ export default function SettingsModal({ isOpen, onClose }: SettingsProps) {
               </div>
             </CardContent>
           </Card>
+          )}
+        </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+        {/* Close Button */}
+        <div className="flex justify-end space-x-3 px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          {activeTab === 'ai-settings' && (
             <Button onClick={saveSettings} className="flex items-center space-x-2">
               <Save className="h-4 w-4" />
-              <span>Save Settings</span>
+              <span>Save AI Settings</span>
             </Button>
-          </div>
+          )}
         </div>
       </div>
     </div>

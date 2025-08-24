@@ -114,8 +114,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid chart data' }, { status: 400 });
     }
 
-    if (!aiSettings || !aiSettings.apiKey) {
-      return NextResponse.json({ success: false, error: 'AI settings not configured' }, { status: 400 });
+    // Use server API key as fallback for free tier users
+    const apiKey = aiSettings?.apiKey || process.env.OPENROUTER_API_KEY || 'demo-free-key';
+    
+    // For demo users, use completely free models (no cost)
+    const selectedModel = aiSettings?.apiKey ? 
+      (aiSettings?.selectedModel || 'deepseek/deepseek-chat') : 
+      'microsoft/phi-3-mini-128k-instruct:free'; // Free model for demos
+    
+    // Check if we have any valid API key (even for free models)
+    if (!apiKey || apiKey.startsWith('demo_key_') || apiKey.includes('your-real-openrouter-key-here') || apiKey === 'demo-free-key') {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'AI analysis requires OpenRouter API key. Get a free key at https://openrouter.ai/keys - even without credits, you can use free AI models for demo trading signals!' 
+      }, { status: 400 });
     }
 
     // Extract price data for technical analysis
@@ -234,7 +246,9 @@ The JSON must have this exact structure:
   }
 }`;
 
-    const userPrompt = `${aiSettings.customPrompt}
+    const customPrompt = aiSettings?.customPrompt || 'Analyze this cryptocurrency chart and provide a trading signal based on technical indicators.';
+    
+    const userPrompt = `${customPrompt}
 
 Current Chart Analysis for ${analysisData.symbol}:
 
@@ -292,13 +306,13 @@ Remember to fill both the main signal AND the dualAction object with specific re
     const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${aiSettings.apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
         'X-Title': 'Crypto Trading Dashboard'
       },
       body: JSON.stringify({
-        model: aiSettings.selectedModel,
+        model: selectedModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -365,7 +379,7 @@ Remember to fill both the main signal AND the dualAction object with specific re
         timestamp: new Date().toISOString(),
         analysis: analysisResult,
         technicalData: analysisData.technicalIndicators,
-        model: aiSettings.selectedModel
+        model: selectedModel
       }
     });
 
