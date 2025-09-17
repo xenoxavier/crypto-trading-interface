@@ -362,42 +362,55 @@ function DashboardPageContent() {
   };
 
   const loadPriceData = async () => {
+    const symbols = ['BTC', 'ETH', 'BNB', 'ADA', 'SOL'];
+
     try {
-      const symbols = ['BTC', 'ETH', 'BNB', 'ADA', 'SOL'];
       const response = await fetch(`/api/prices?symbols=${symbols.join(',')}`);
-      
+
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
+        if (result.success && result.data && Array.isArray(result.data)) {
           setPriceData(result.data);
+          return; // Successfully loaded data
         } else {
-          console.error('API returned error:', result.error);
-          // Fallback to mock data if API fails
-          const mockData: PriceData[] = symbols.map(symbol => ({
-            symbol,
-            price: Math.random() * 50000 + 20000,
-            change24h: (Math.random() - 0.5) * 2000,
-            changePercent24h: (Math.random() - 0.5) * 10,
-            volume24h: Math.random() * 1000000000
-          }));
-          setPriceData(mockData);
+          console.warn('API returned invalid data format:', result);
         }
       } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Don't throw error, just log and fall back
+        console.warn(`API responded with status ${response.status}, using fallback data`);
       }
     } catch (error) {
-      console.error('Error loading price data:', error);
-      // Fallback to mock data if fetch fails
-      const symbols = ['BTC', 'ETH', 'BNB', 'ADA', 'SOL'];
-      const mockData: PriceData[] = symbols.map(symbol => ({
-        symbol,
-        price: Math.random() * 50000 + 20000,
-        change24h: (Math.random() - 0.5) * 2000,
-        changePercent24h: (Math.random() - 0.5) * 10,
-        volume24h: Math.random() * 1000000000
-      }));
-      setPriceData(mockData);
+      console.warn('Network error loading price data, using fallback:', error);
     }
+
+    // Always fall back to realistic mock data if API fails
+    const generateMockPrice = (symbol: string) => {
+      const basePrices = {
+        'BTC': 45000,
+        'ETH': 2800,
+        'BNB': 320,
+        'ADA': 0.45,
+        'SOL': 95
+      };
+
+      const basePrice = basePrices[symbol as keyof typeof basePrices] || 100;
+      const variance = 0.05; // 5% variance
+      const price = basePrice * (1 + (Math.random() - 0.5) * variance);
+      const changePercent = (Math.random() - 0.5) * 10; // -5% to +5%
+
+      return {
+        symbol,
+        price: price,
+        change24h: price * (changePercent / 100),
+        changePercent24h: changePercent,
+        volume24h: Math.random() * 1000000000 + 500000000,
+        high24h: price * 1.03,
+        low24h: price * 0.97
+      };
+    };
+
+    const mockData: PriceData[] = symbols.map(generateMockPrice);
+    setPriceData(mockData);
   };
 
   const loadSignals = async () => {
