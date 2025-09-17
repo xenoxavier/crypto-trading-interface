@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAuth } from '@/components/providers/FirebaseAuthProvider';
 import { UserDropdown } from '@/components/ui/UserDropdown';
-import { UserDataDebug } from '@/components/debug/UserDataDebug';
 import { DemoModeNotice } from '@/components/ui/DemoModeNotice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1667,6 +1666,33 @@ function DashboardPageContent() {
                 </div>
               </div>
 
+              {/* Signal Hierarchy Explanation */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="font-medium text-blue-700 dark:text-blue-300 mb-2">Signal Hierarchy:</div>
+                <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
+                  <div><span className="font-bold text-green-600">STRONG_BUY</span> - Excellent entry opportunity</div>
+                  <div><span className="font-bold text-green-500">BUY</span> - Good time to buy/add to position</div>
+                  <div><span className="font-bold text-yellow-600">HOLD</span> - Wait if no position, keep if you have position</div>
+                  <div><span className="font-bold text-red-500">SELL</span> - Take profits or cut losses</div>
+                  <div><span className="font-bold text-red-600">STRONG_SELL</span> - Exit immediately</div>
+                </div>
+              </div>
+
+              {/* Reasoning */}
+              {selectedAISignal.metadata?.reasoning && (
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Analysis Reasoning:</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    {selectedAISignal.metadata.reasoning.map((reason: string, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 flex-shrink-0"></div>
+                        <div>{reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* AI Analysis */}
               <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border-l-4 border-[#f0b90b]">
                 <div className="font-medium text-[#d97706] mb-2">AI Analysis</div>
@@ -1700,8 +1726,6 @@ function DashboardPageContent() {
         } : null}
       />
       
-      {/* Debug Component - Remove in production */}
-      <UserDataDebug />
     </div>
   );
 }

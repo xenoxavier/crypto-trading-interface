@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, symbol, timeframe = '15min', symbols } = body;
+    const { action, symbol, timeframe = '15min', symbols, portfolio } = body;
 
     switch (action) {
       case 'generate_single':
@@ -106,8 +106,9 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Generate new signal
-        const aiSignal = await tradingSignalAI.generateSignal(symbol, timeframe);
+        // Generate new signal with portfolio awareness
+        const userHoldings = portfolio?.holdings || [];
+        const aiSignal = await tradingSignalAI.generateSignal(symbol, timeframe, userHoldings);
         
         if (!aiSignal) {
           return NextResponse.json(
@@ -131,7 +132,8 @@ export async function POST(request: NextRequest) {
               reasoning: aiSignal.reasoning,
               riskReward: aiSignal.riskReward,
               aiGenerated: true,
-              generatedBy: session.user.id
+              generatedBy: session.user.id,
+              userPosition: aiSignal.userPosition
             },
             expiresAt: aiSignal.validUntil
           }
@@ -158,7 +160,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const batchSignals = await tradingSignalAI.generateBatchSignals(symbols, timeframe);
+        const userHoldingsBatch = portfolio?.holdings || [];
+        const batchSignals = await tradingSignalAI.generateBatchSignals(symbols, timeframe, userHoldingsBatch);
         const savedSignals: any[] = [];
 
         // Save all generated signals to database
@@ -178,7 +181,8 @@ export async function POST(request: NextRequest) {
                   reasoning: signal.reasoning,
                   riskReward: signal.riskReward,
                   aiGenerated: true,
-                  generatedBy: session.user.id
+                  generatedBy: session.user.id,
+                  userPosition: signal.userPosition
                 },
                 expiresAt: signal.validUntil
               }

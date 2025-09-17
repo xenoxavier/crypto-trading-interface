@@ -2,6 +2,17 @@ import { cryptoDataService, TechnicalIndicators } from '../api/crypto-data';
 import { prisma } from '../db';
 import { cache } from '../redis';
 
+export interface PortfolioHolding {
+  id: string;
+  symbol: string;
+  quantity: number;
+  averageBuyPrice: number;
+  currentPrice: number;
+  totalValue: number;
+  pnl: number;
+  pnlPercent: number;
+}
+
 export interface AIAnalysisResult {
   signal: 'BUY' | 'SELL' | 'HOLD' | 'STRONG_BUY' | 'STRONG_SELL';
   confidence: number; // 0-10 scale
@@ -19,6 +30,12 @@ export interface AIAnalysisResult {
   reasoning: string[];
   timeframe: string;
   validUntil: Date;
+  userPosition?: {
+    hasPosition: boolean;
+    quantity: number;
+    averagePrice: number;
+    currentPnL: number;
+  };
 }
 
 export interface MarketConditions {
@@ -45,7 +62,7 @@ class TradingSignalAI {
   /**
    * Generate AI-powered trading signal for a given symbol and timeframe
    */
-  async generateSignal(symbol: string, timeframe: string): Promise<AIAnalysisResult | null> {
+  async generateSignal(symbol: string, timeframe: string, userHoldings?: PortfolioHolding[]): Promise<AIAnalysisResult | null> {
     try {
       // Check cache first
       const cacheKey = `ai_signal:${symbol}:${timeframe}`;
@@ -67,6 +84,9 @@ class TradingSignalAI {
 
       const currentPrice = priceData[priceData.length - 1].close;
 
+      // Check user's current position
+      const userPosition = this.analyzeUserPosition(symbol, currentPrice, userHoldings);
+
       // Analyze different aspects
       const technicalScore = this.analyzeTechnicalIndicators(indicators);
       const sentimentScore = await this.analyzeSentiment(symbol);
@@ -81,8 +101,8 @@ class TradingSignalAI {
         trendScore * 0.2
       );
 
-      // Generate signal based on overall analysis
-      const signal = this.generateSignalFromScore(overallScore, indicators, marketConditions);
+      // Generate signal based on overall analysis and user position
+      const signal = this.generateSignalFromScore(overallScore, indicators, marketConditions, userPosition);
       const confidence = this.calculateConfidence(overallScore, marketConditions);
       
       // Calculate entry, stop loss, and take profit levels
@@ -98,7 +118,8 @@ class TradingSignalAI {
         signal,
         indicators,
         { technicalScore, sentimentScore, volumeScore, trendScore },
-        marketConditions
+        marketConditions,
+        userPosition
       );
 
       const result: AIAnalysisResult = {
@@ -117,7 +138,8 @@ class TradingSignalAI {
         },
         reasoning,
         timeframe,
-        validUntil: new Date(Date.now() + this.getSignalValidityDuration(timeframe))
+        validUntil: new Date(Date.now() + this.getSignalValidityDuration(timeframe)),
+        userPosition
       };
 
       // Cache the result
@@ -129,6 +151,39 @@ class TradingSignalAI {
       console.error(`Error generating AI signal for ${symbol}:`, error);
       return null;
     }
+  }
+
+  /**
+   * Analyze user's current position in the symbol
+   */
+  private analyzeUserPosition(symbol: string, currentPrice: number, userHoldings?: PortfolioHolding[]) {
+    if (!userHoldings || userHoldings.length === 0) {
+      return {
+        hasPosition: false,
+        quantity: 0,
+        averagePrice: 0,
+        currentPnL: 0
+      };
+    }
+
+    const holding = userHoldings.find(h => h.symbol === symbol);
+    if (!holding) {
+      return {
+        hasPosition: false,
+        quantity: 0,
+        averagePrice: 0,
+        currentPnL: 0
+      };
+    }
+
+    const currentPnL = (currentPrice - holding.averageBuyPrice) / holding.averageBuyPrice * 100;
+
+    return {
+      hasPosition: true,
+      quantity: holding.quantity,
+      averagePrice: holding.averageBuyPrice,
+      currentPnL
+    };
   }
 
   /**
@@ -346,9 +401,10 @@ class TradingSignalAI {
    * Generate signal from overall score and conditions
    */
   private generateSignalFromScore(
-    score: number, 
-    indicators: TechnicalIndicators, 
-    conditions: MarketConditions
+    score: number,
+    indicators: TechnicalIndicators,
+    conditions: MarketConditions,
+    userPosition?: { hasPosition: boolean; quantity: number; averagePrice: number; currentPnL: number }
   ): AIAnalysisResult['signal'] {
     // Adjust score based on market conditions
     let adjustedScore = score;
@@ -361,6 +417,40 @@ class TradingSignalAI {
       adjustedScore += 0.5; // Boost bullish signals in uptrend
     } else if (conditions.trend === 'BEARISH' && score < 5) {
       adjustedScore -= 0.5; // Boost bearish signals in downtrend
+    }
+
+    // CRITICAL FIX: Adjust for user position and encourage buying when user has no position
+    if (userPosition) {
+      if (!userPosition.hasPosition) {
+        // User has NO position - be more aggressive about suggesting BUY when conditions are favorable
+        if (adjustedScore >= 5.5) { // Lower threshold for buy signals when no position
+          adjustedScore += 1; // Boost buy signals significantly
+        }
+
+        // If RSI shows oversold conditions and user has no position, strongly encourage buying
+        if (indicators.rsi < 35 && adjustedScore > 4) {
+          adjustedScore += 1.5; // Strong boost for oversold conditions with no position
+        }
+
+        // Never suggest SELL when user has no position
+        if (adjustedScore < 5) {
+          adjustedScore = 5; // Force to neutral/hold instead of sell
+        }
+      } else {
+        // User HAS position - consider profit taking and risk management
+        if (userPosition.currentPnL > 50) { // Large profit (50%+)
+          adjustedScore -= 0.5; // Slightly favor taking profits
+        } else if (userPosition.currentPnL < -20) { // Large loss (20%+)
+          if (adjustedScore < 5) {
+            adjustedScore -= 0.5; // Consider cutting losses
+          }
+        }
+
+        // If user has position and we're in strong oversold, suggest hold instead of more buying
+        if (indicators.rsi < 25 && userPosition.currentPnL < -10) {
+          adjustedScore = Math.min(adjustedScore, 6); // Cap at moderate buy
+        }
+      }
     }
 
     // Generate signal based on adjusted score
@@ -444,7 +534,8 @@ class TradingSignalAI {
     signal: AIAnalysisResult['signal'],
     indicators: TechnicalIndicators,
     scores: { technicalScore: number; sentimentScore: number; volumeScore: number; trendScore: number },
-    conditions: MarketConditions
+    conditions: MarketConditions,
+    userPosition?: { hasPosition: boolean; quantity: number; averagePrice: number; currentPnL: number }
   ): string[] {
     const reasoning: string[] = [];
 
@@ -474,16 +565,52 @@ class TradingSignalAI {
       reasoning.push('High volatility increases risk - consider smaller position sizes.');
     }
 
+    // User position-specific reasoning
+    if (userPosition) {
+      if (!userPosition.hasPosition) {
+        if (signal === 'BUY' || signal === 'STRONG_BUY') {
+          reasoning.push(`No current position detected - good opportunity to start building a position.`);
+        }
+        if (indicators.rsi < 35) {
+          reasoning.push(`RSI indicates oversold conditions - potentially good entry point for new position.`);
+        }
+      } else {
+        reasoning.push(`Current position: ${userPosition.quantity.toFixed(4)} units at average price $${userPosition.averagePrice.toFixed(2)}`);
+
+        if (userPosition.currentPnL > 0) {
+          reasoning.push(`Position is profitable (+${userPosition.currentPnL.toFixed(1)}%) - consider profit-taking strategies.`);
+        } else if (userPosition.currentPnL < -10) {
+          reasoning.push(`Position is underwater (${userPosition.currentPnL.toFixed(1)}%) - risk management is important.`);
+        }
+
+        if (signal === 'SELL' || signal === 'STRONG_SELL') {
+          if (userPosition.currentPnL > 20) {
+            reasoning.push('Strong profit levels reached - taking profits may be wise.');
+          } else if (userPosition.currentPnL < -15) {
+            reasoning.push('Position showing significant losses - consider cutting losses to preserve capital.');
+          }
+        }
+      }
+    }
+
     // Signal-specific reasoning
     switch (signal) {
       case 'STRONG_BUY':
         reasoning.push('Multiple confluences align for a strong bullish signal.');
+        break;
+      case 'BUY':
+        if (userPosition && !userPosition.hasPosition) {
+          reasoning.push('Good entry opportunity identified for building initial position.');
+        }
         break;
       case 'STRONG_SELL':
         reasoning.push('Multiple bearish factors indicate strong selling pressure.');
         break;
       case 'HOLD':
         reasoning.push('Mixed signals suggest waiting for clearer directional bias.');
+        if (userPosition && userPosition.hasPosition) {
+          reasoning.push('If holding a position, maintain current allocation and monitor closely.');
+        }
         break;
     }
 
@@ -510,11 +637,11 @@ class TradingSignalAI {
   /**
    * Batch generate signals for multiple symbols
    */
-  async generateBatchSignals(symbols: string[], timeframe: string): Promise<Map<string, AIAnalysisResult>> {
+  async generateBatchSignals(symbols: string[], timeframe: string, userHoldings?: PortfolioHolding[]): Promise<Map<string, AIAnalysisResult>> {
     const results = new Map<string, AIAnalysisResult>();
-    
+
     const promises = symbols.map(async (symbol) => {
-      const signal = await this.generateSignal(symbol, timeframe);
+      const signal = await this.generateSignal(symbol, timeframe, userHoldings);
       if (signal) {
         results.set(symbol, signal);
       }
