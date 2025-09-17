@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Get signal accuracy statistics
-    const accuracy = await tradingSignalAI.getSignalAccuracy(timeframe, symbol);
+    const accuracy = await tradingSignalAI.getSignalAccuracy(timeframe || undefined, symbol || undefined);
 
     return NextResponse.json({
       success: true,

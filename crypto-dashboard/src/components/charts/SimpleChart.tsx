@@ -335,7 +335,7 @@ export function SimpleChart({
       
       const high = currentPriceVal + Math.random() * volatility * 0.5;
       const low = currentPriceVal - Math.random() * volatility * 0.5;
-      const open = i === 0 ? basePrice : data[i - 1]?.close || currentPriceVal;
+      const open: number = i === 0 ? basePrice : data[i - 1]?.close || currentPriceVal;
       
       data.push({
         time: Date.now() - (100 - i) * 60000,

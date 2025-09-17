@@ -1048,7 +1048,13 @@ function DashboardPageContent() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onChange = importPortfolio;
+    input.onchange = (event) => {
+      const fakeEvent = {
+        target: event.target,
+        currentTarget: event.target
+      } as React.ChangeEvent<HTMLInputElement>;
+      importPortfolio(fakeEvent);
+    };
     input.click();
   };
 

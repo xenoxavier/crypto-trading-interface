@@ -140,7 +140,6 @@ export function TradingChart({
         },
         timeScale: {
           borderColor: '#4b5563',
-          textColor: '#d1d5db',
           timeVisible: true,
           secondsVisible: false,
         },

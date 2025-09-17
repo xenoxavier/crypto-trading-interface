@@ -26,9 +26,29 @@ This guide will help you deploy your crypto trading dashboard to Vercel.
    - **Output Directory**: Leave empty (Next.js default)
    - **Install Command**: `npm install`
 
-## Step 3: Environment Variables
+## Step 3: Set Up Database (Required)
+
+**Important:** SQLite doesn't work in Vercel's serverless environment. You need a managed database:
+
+### Recommended Database Options:
+1. **Neon (PostgreSQL)** - https://neon.tech/ - Free tier: 0.5GB storage
+2. **PlanetScale (MySQL)** - https://planetscale.com/ - Free tier: 5GB storage
+3. **Supabase (PostgreSQL)** - https://supabase.com/ - Free tier: 500MB storage
+
+### Quick Setup with Neon (Recommended):
+1. Go to [neon.tech](https://neon.tech) and create free account
+2. Create a new project
+3. Copy the connection string from your dashboard
+4. It will look like: `postgresql://username:password@ep-xxx.region.aws.neon.tech/dbname?sslmode=require`
+
+## Step 4: Environment Variables
 
 Click on "Environment Variables" and add these required variables:
+
+### Database Configuration (Required)
+```
+DATABASE_URL=postgresql://username:password@host:5432/database_name
+```
 
 ### Firebase Configuration (Required)
 ```
@@ -38,6 +58,12 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
+
+### NextAuth Configuration (Required)
+```
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=your-long-random-secret-string-here
 ```
 
 ### OpenRouter API (Optional - for AI features)
@@ -61,24 +87,35 @@ OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
 3. Navigate to [API Keys](https://openrouter.ai/keys)
 4. Create a new API key
 
-## Step 4: Firebase Setup for Production
+## Step 5: Generate NextAuth Secret
 
-1. In Firebase Console, go to "Authentication"
-2. Enable Email/Password and Google sign-in methods
-3. Go to "Authentication" → "Settings" → "Authorized domains"
-4. Add your Vercel domain (will be provided after deployment)
+1. Run this command to generate a secure secret:
+```bash
+openssl rand -base64 32
+```
+2. Copy the output and use it as your `NEXTAUTH_SECRET`
 
-## Step 5: Deploy
+## Step 6: Deploy
 
 1. Click "Deploy" button in Vercel
 2. Wait for build to complete (3-5 minutes)
 3. Your app will be available at: `https://your-project-name.vercel.app`
 
-## Step 6: Configure Firebase Authorized Domains
+## Step 7: Configure Firebase Authorized Domains
 
 1. After deployment, copy your Vercel URL
 2. Go back to Firebase Console → Authentication → Settings → Authorized domains
 3. Add your Vercel domain (e.g., `your-project-name.vercel.app`)
+
+## Step 8: Set Up Database Schema
+
+1. After first deployment, you need to run database migrations
+2. In Vercel dashboard, go to your project → Functions tab
+3. Or run locally with your production DATABASE_URL:
+```bash
+npx prisma generate
+npx prisma db push
+```
 
 ## Step 7: Test Your Deployment
 

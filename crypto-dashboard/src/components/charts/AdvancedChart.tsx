@@ -52,9 +52,8 @@ export function AdvancedChart(props: AdvancedChartProps) {
 
   return (
     <div>
-      <BinanceChart 
+      <BinanceChart
         {...props}
-        onError={() => setUseFallback(true)}
       />
     </div>
   );
